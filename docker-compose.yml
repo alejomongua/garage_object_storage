@@ -1,0 +1,34 @@
+services:
+  garage:
+    image: dxflrs/garage:v2.0.0
+    container_name: garage
+    restart: unless-stopped
+    networks:
+      - garage-network
+    env_file:
+      - .env
+    volumes:
+      - ./config/garage.toml:/etc/garage.toml
+      - ./data/garage/meta:/var/lib/garage/meta
+      - ./data/garage/data:/var/lib/garage/data
+    environment:
+      - RUST_LOG=garage=info
+
+  nginx:
+    image: nginx:alpine
+    container_name: garage-nginx
+    restart: unless-stopped
+    networks:
+      - garage-network
+    ports:
+      - "36443:36443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./certs/privkey.pem:/etc/nginx/ssl/privkey.pem:ro
+      - ./certs/fullchain.pem:/etc/nginx/ssl/fullchain.pem:ro
+    depends_on:
+      - garage
+
+networks:
+  garage-network:
+    driver: bridge
